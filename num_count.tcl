@@ -7,11 +7,17 @@ proc lip_count {method} {
 	set sf [lindex $::argv 2]
 	set tf [lindex $::argv 3]
 	set fs [lindex $::argv 4]
+	set nframes [expr { ($tf - $sf) / $fs }]
 	set nlipids [expr { [lindex $::argv 5] + [lindex $::argv 6] }]
 	set nlipids [expr { $nlipids * 3 }]
 
+	for {set j 0} {$j < $nlipids} {incr j} {
+		set rfr($j) 0.0
+	}
+
 	set h [open "reslist" "w"]
-	
+	set g [open "variable" "w"]
+	set j 0
 	for {set fr $sf} {$fr < $tf} {set fr [expr { $fr + $fs }]} {
 
 		puts "				##### FRAME $fr #####"
@@ -40,8 +46,6 @@ proc lip_count {method} {
 		set data1 [read $f]
 		close $f
 
-		set g [open "radius" "w"]
-
 		# ASSUMING CPPTRAJ GENERATES THE CRYTAL INFO
 
 		if { [lindex $data1 0] != "CRYST1" } {
@@ -55,6 +59,7 @@ proc lip_count {method} {
 
 		set k 0
 		set atc 0
+		set j 0
 		while { $k < [llength $data1] } {
 			set term [lindex $data1 $k]
 			set t1 [string range $term 0 5]
@@ -161,7 +166,8 @@ proc lip_count {method} {
 
 						set r [expr { ($corx*$corx) + ($cory*$cory) + ($corz*$corz) }]
 						set r [expr { sqrt($r) }]
-						puts $g "$r"
+						set rfr($j) [expr { $rfr($j) + $r }]
+						incr j
 
 						if { $rc == -1 } {
 							set rc $r
@@ -266,9 +272,9 @@ proc lip_count {method} {
 							if { $atc == 2 } {
 								set atc 0
 								# GOT BOTH THE VECTORS
-								set xvec [expr { $vecx(1) - $vecx(0) }]
-								set yvec [expr { $vecy(1) - $vecy(0) }]
-								set zvec [expr { $vecz(1) - $vecz(0) }]
+								set xvec [expr { $vecx(0) - $vecx(1) }]
+								set yvec [expr { $vecy(0) - $vecy(1) }]
+								set zvec [expr { $vecz(0) - $vecz(1) }]
 		
 								set vecr [list $xvec $yvec $zvec]
 								set vecr [::math::linearalgebra::unitLengthVector $vecr]
@@ -280,9 +286,10 @@ proc lip_count {method} {
 								set angle [format "%.3f" $angle]
 								set cos [expr { acos($angle) }]
 								set cos [expr { ($cos * 180.0) / 3.14 }]
-								puts $g "$cos"
-								if { $cory > 0 } {
-									if { $cos < 100.0 } {
+								set rfr($j) [expr { $rfr($j) + $cos }]
+								incr j
+								if { $corz > 0 } {
+									if { $cos < 90.0 } {
 										set reslistul [linsert $reslistul $nul [expr { $resid - 1 }]]
 										incr nul
 										set reslistul [linsert $reslistul $nul $resid]
@@ -291,7 +298,7 @@ proc lip_count {method} {
 										incr nul
 									}
 								} else {
-									if { $cos < 100.0 } {
+									if { $cos > 90.0 } {
 										set reslistul [linsert $reslistul $nul [expr { $resid - 1 }]]
 										incr nul
 										set reslistul [linsert $reslistul $nul $resid]
@@ -329,8 +336,16 @@ proc lip_count {method} {
 		#puts $h "inner"
 		#puts $h "\{$fr $nll\}"
 		puts $h "\{$reslistll\}"
-		close $g
 	}
+
+	# PUTTING THE VARIALBLES
+
+	for {set i 0} {$i < [expr { $nlipids / 3.0 }]} {incr i} {
+		set rfr($i) [expr { $rfr($i) / $nframes }]
+		puts $g "[expr { $i + 1 }] $rfr($i)"
+	}
+	close $g
+	
 	close $h
 	
 	# DETERMING THE FINAL RESIDUE LIST AS WELL AS THE LIST OF FLIPPED LIPIDS
