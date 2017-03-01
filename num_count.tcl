@@ -31,7 +31,7 @@ proc lip_count {method} {
 		set reslistul ""
 		set nul 0
 		set rc 88.0
-		set vecrc ""
+		set vecrc [list 0 0 1]
 		set reslistll ""
 		set nll 0
 
@@ -72,6 +72,8 @@ proc lip_count {method} {
 		
 				set atype [lindex $data1 [expr { $k + 2 - $shift}]]
 				set satype [string length $atype]
+
+				set resname [lindex $data1 [expr { $k + 3 - $shift }]]
 
 				if { $satype > 5} {
 					set shift2 1
@@ -176,108 +178,128 @@ proc lip_count {method} {
 				}	else {
 		
 					# BASED ON ANGLE
-
-					if { $atype == "P31" || $atype == "C112" } {
-
-						set res_id [lindex $data1 [expr { $k + 4 - $shift - $shift2}]]
-						set sres_id [string length $res_id]
-				
-						set shift1 0
-			
-						set x1 [lindex $data1 [expr { $k + 5 - $shift - $shift1 -$shift2}]]
-						set sx1 [string length $x1]
-						if { $sx1 > 8 } {
-							set shift3 1
-							set t 0
-							while { [string range $x1 $t $t] != "." } {
-									incr t
-							}
-							set corx [string range $x1 0 [expr { $t + 3 }]]
-							set cory [string range $x1 [expr { $t + 4 }] end]
-							set sx1 [string length [string range $x1 0 [expr { $t + 3 }]]]
-							set y1 ""
-							set sy1 8
-							set scory [string length $cory]
-							if { $scory > 8 } {
-								set y2 $cory
-								set shift4 1
-								set t 0
-								while { [string range $y2 $t $t] != "." } {
-									incr t
-								}
-								set cory [string range $y2 0 [expr { $t + 3 }]]
-								set corz [string range $y2 [expr { $t + 4 }] end]
-								set sy1 [string length [string range $y2 0 [expr { $t + 3 }]]]
-								set z1 ""
-								set sz1 8
-							} else {
-								set shift4 0
-								set z1 [lindex $data1 [expr { $k + 7 - $shift -$shift1 - $shift2 - $shift3 - $shift4}]] 
-								set z1 [format "%.3f" [expr { $z1 - 0.0 }]]
-								set corz $z1
-								set sz1 [string length $z1]
-							}
-						} else { 
-							set shift3 0
-							set x1 [format "%.3f" [expr { $x1 - 0.0 }]]
-							set corx $x1
-							set sx1 [string length $x1]
-							set y1 [lindex $data1 [expr { $k + 6 - $shift -$shift1 - $shift2 - $shift3}]]
-							set cory $y1 
-							set sy1 [string length $y1]
-							if { $sy1 > 8 } {
-								set shift4 1
-								set t 0
-								while { [string range $y1 $t $t] != "." } {
-									incr t
-								}
-								set cory [string range $y1 0 [expr { $t + 3 }]]
-								set corz [string range $y1 [expr { $t + 4 }] end]
-								set sy1 [string length [string range $y1 0 [expr { $t + 3 }]]]
-								set z1 ""
-								set sz1 8
-							} else {
-								set shift4 0
-								set y1 [format "%.3f" [expr { $y1 - 0.0 }]]
-								set cory $y1
-								set sy1 [string length $y1]
-								set z1 [lindex $data1 [expr { $k + 7 - $shift -$shift1 - $shift2 - $shift3 - $shift4}]] 
-								set corz $z1
-								set z1 [format "%.3f" [expr { $z1 - 0.0 }]]		
-								set sz1 [string length $z1]
-							}
-						}
-
-						set corx [expr { $corx - $xshift }]
-						set cory [expr { $cory - $yshift }]
-						set corz [expr { $corz - $zshift }]
-						set vecx($atc) $corx
-						set vecy($atc) $cory
-						set vecz($atc) $corz
-						incr atc
-
-						if { $atc == 2 } {
-							set atc 0
-							# GOT BOTH THE VECTORS
-							set xvec [expr { $vecx(1) - $vecx(0) }]
-							set yvec [expr { $vecy(1) - $vecy(0) }]
-							set zvec [expr { $vecz(1) - $vecz(0) }]
+					
+	
+					if { $resname == "PC" || $resname == "OL" } {
+						if { $atype == "P31" || $atype == "C110" } {
+							set res_id [lindex $data1 [expr { $k + 4 - $shift - $shift2}]]
+							set sres_id [string length $res_id]
 		
-							set vecr [list $xvec $yvec $zvec]
-							set vecr [::math::linearalgebra::unitLengthVector $vecr]
-			
-							if { $vecrc == "" } {
-								set vecrc $vecr
+							if { $atype == "P31" } {
+								set resid $res_id
 							}
-							set angle [::math::linearalgebra::dotproduct $vecrc $vecr]
+				
+							set shift1 0
+			
+							set x1 [lindex $data1 [expr { $k + 5 - $shift - $shift1 -$shift2}]]
+							set sx1 [string length $x1]
+							if { $sx1 > 8 } {
+								set shift3 1
+								set t 0
+								while { [string range $x1 $t $t] != "." } {
+										incr t
+								}
+								set corx [string range $x1 0 [expr { $t + 3 }]]
+								set cory [string range $x1 [expr { $t + 4 }] end]
+								set sx1 [string length [string range $x1 0 [expr { $t + 3 }]]]
+								set y1 ""
+								set sy1 8
+								set scory [string length $cory]
+								if { $scory > 8 } {
+									set y2 $cory
+									set shift4 1
+									set t 0
+									while { [string range $y2 $t $t] != "." } {
+										incr t
+									}
+									set cory [string range $y2 0 [expr { $t + 3 }]]
+									set corz [string range $y2 [expr { $t + 4 }] end]
+									set sy1 [string length [string range $y2 0 [expr { $t + 3 }]]]
+									set z1 ""
+									set sz1 8
+								} else {
+									set shift4 0
+									set z1 [lindex $data1 [expr { $k + 7 - $shift -$shift1 - $shift2 - $shift3 - $shift4}]] 
+									set z1 [format "%.3f" [expr { $z1 - 0.0 }]]
+									set corz $z1
+									set sz1 [string length $z1]
+								}
+							} else { 
+								set shift3 0
+								set x1 [format "%.3f" [expr { $x1 - 0.0 }]]
+								set corx $x1
+								set sx1 [string length $x1]
+								set y1 [lindex $data1 [expr { $k + 6 - $shift -$shift1 - $shift2 - $shift3}]]
+								set cory $y1 
+								set sy1 [string length $y1]
+								if { $sy1 > 8 } {
+									set shift4 1
+									set t 0
+									while { [string range $y1 $t $t] != "." } {
+										incr t
+									}
+									set cory [string range $y1 0 [expr { $t + 3 }]]
+									set corz [string range $y1 [expr { $t + 4 }] end]
+									set sy1 [string length [string range $y1 0 [expr { $t + 3 }]]]
+									set z1 ""
+									set sz1 8
+								} else {
+									set shift4 0
+									set y1 [format "%.3f" [expr { $y1 - 0.0 }]]
+									set cory $y1
+									set sy1 [string length $y1]
+									set z1 [lindex $data1 [expr { $k + 7 - $shift -$shift1 - $shift2 - $shift3 - $shift4}]] 
+									set corz $z1
+									set z1 [format "%.3f" [expr { $z1 - 0.0 }]]		
+									set sz1 [string length $z1]
+								}
+							}
 
-							if { $angle > 0.0 } {
-								set reslistul [linsert $reslistul $nul [expr { $res_id - 1 }]]
-								incr nul
-								set reslistul [linsert $reslistul $nul $res_id]
-								incr nul
-								set reslistul [linsert $reslistul $nul [expr { $res_id + 1 }]]
-								incr nul
+							set corx [expr { $corx - $xshift }]
+							set cory [expr { $cory - $yshift }]
+							set corz [expr { $corz - $zshift }]
+							set vecx($atc) $corx
+							set vecy($atc) $cory
+							set vecz($atc) $corz
+							incr atc
+
+							if { $atc == 2 } {
+								set atc 0
+								# GOT BOTH THE VECTORS
+								set xvec [expr { $vecx(1) - $vecx(0) }]
+								set yvec [expr { $vecy(1) - $vecy(0) }]
+								set zvec [expr { $vecz(1) - $vecz(0) }]
+		
+								set vecr [list $xvec $yvec $zvec]
+								set vecr [::math::linearalgebra::unitLengthVector $vecr]
+			
+								if { $vecrc == "" } {
+									set vecrc $vecr
+								}
+								set angle [::math::linearalgebra::dotproduct $vecrc $vecr]
+								set angle [format "%.3f" $angle]
+								set cos [expr { acos($angle) }]
+								set cos [expr { ($cos * 180.0) / 3.14 }]
+								puts $g "$cos"
+								if { $cory > 0 } {
+									if { $cos < 100.0 } {
+										set reslistul [linsert $reslistul $nul [expr { $resid - 1 }]]
+										incr nul
+										set reslistul [linsert $reslistul $nul $resid]
+										incr nul
+										set reslistul [linsert $reslistul $nul [expr { $resid + 1 }]]
+										incr nul
+									}
+								} else {
+									if { $cos < 100.0 } {
+										set reslistul [linsert $reslistul $nul [expr { $resid - 1 }]]
+										incr nul
+										set reslistul [linsert $reslistul $nul $resid]
+										incr nul
+										set reslistul [linsert $reslistul $nul [expr { $resid + 1 }]]
+										incr nul
+									}
+								}
 							}
 						}
 					}
@@ -372,7 +394,7 @@ proc lip_count {method} {
 			puts "				#### RES $i BELONGS TO INNER LEAFLET BY [expr { ($countil * 100) / ($countol+$countil) }] PERCENT ####"
 			set reslistil [linsert $reslistil $nil $i]
 			incr nil
-			if { $i < [expr { 3 * [lindex $::argv 6] }] } {
+			if { $i <= [expr { 3 * [lindex $::argv 6] }] } {
 				set reslistolf [linsert $reslistolf $nolf $i]
 				incr nolf
 			}
@@ -391,5 +413,5 @@ proc lip_count {method} {
 	close $h3
 	close $h4
 }
-lip_count 1
+lip_count 0
 	
