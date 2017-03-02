@@ -1,4 +1,4 @@
-# tclsh sim_var.tcl no_temp temp(s) var repeat_no
+# tclsh sim_var.tcl no_temp temp(s) repeat_no var
 
 set output [lindex $::argv [expr { 1 + (2 * [lindex $::argv 0]) }]]
 set index [lindex $::argv [expr { 2 + (2 * [lindex $::argv 0]) }]]
